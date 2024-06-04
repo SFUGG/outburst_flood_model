@@ -1,12 +1,19 @@
 # Subglacial outburst flood modelling
 
-Tim Hill
-tim_hill_2@sfu.ca
-December 2021, updated June 2024
+|     |     |     |
+| --- | --- | --- |
+|Tim Hill | tim_hill_2@sfu.ca | December 2021, updated June 2024 |
+
 
 ## Installation
 
-The code was tested using python 3.11.9 on Ubuntu with packages listed in `requirements.txt`.
+The code was tested using python 3.11.9 on Ubuntu with packages listed in `requirements.txt`. If you can use pip, installing the requirements should be as easy as
+
+```bash
+pip install matplotlib numpy scipy
+```
+
+To run this code, clone the git repo to your desired location and run the scripts in the `python/` directory.
 
 ## Report
 
