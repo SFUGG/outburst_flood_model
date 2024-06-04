@@ -118,5 +118,5 @@ ax2.set_ylim([0, 550])
 
 plt.tight_layout()
 
-fig.savefig('hypsometry_discharge.png', dpi=600)
+fig.savefig('figures/hypsometry_discharge.png', dpi=600)
 

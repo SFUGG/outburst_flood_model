@@ -34,7 +34,7 @@ ax.set_xlabel('Distance along conduit (km)')
 ax.set_ylabel('Elevation (m)')
 ax.grid()
 plt.tight_layout()
-fig.savefig('domain.png', dpi=600)
+fig.savefig('figures/domain.png', dpi=600)
 
 params = models.default_params.copy()
 params['L'] = L
@@ -108,5 +108,5 @@ ax2.legend()
 
 plt.tight_layout()
 
-fig.savefig('imposed_discharge_comparison.png', dpi=600)
+fig.savefig('figures/imposed_discharge_comparison.png', dpi=600)
 

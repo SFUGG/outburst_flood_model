@@ -99,7 +99,7 @@ ax2.set_xlabel('Time (days)')
 ax2.text(0.1, 0.925, 'b', transform=ax2.transAxes, fontsize=12)
 ax2.set_ylim([0, 100])
 
-fig.savefig('pressure_discharge_comparison.png', dpi=600)
+fig.savefig('figures/pressure_discharge_comparison.png', dpi=600)
 
 fig, axs = plt.subplots(nrows=4, figsize=(7, 8), sharex=True)
 axs = axs.flatten()
@@ -132,4 +132,4 @@ axs[3].text(0.025, 0.85, 'd', transform=axs[3].transAxes, fontsize=12)
 
 
 plt.tight_layout()
-fig.savefig('compressible_pressure_drainage.png', dpi=600)
+fig.savefig('figures/compressible_pressure_drainage.png', dpi=600)

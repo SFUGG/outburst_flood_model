@@ -2,6 +2,8 @@
 Sensitivity to compressibility beta and friction fR for pressure-coupled model
 """
 
+import os
+
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -80,34 +82,29 @@ beta_vals = [1e-7, 1e-6, 1e-5, 1e-4]
 n_beta = len(beta_vals)
 Q_beta = np.zeros((n_t, n_beta))
 
+if not os.path.exists('data/Q_fR.npy'):
+    for (i, fR) in enumerate(fR_vals):
+        print(fR)
+        sens_params = params.copy()
+        sens_params['fR'] = fR
+
+        S, pw, Q, h = models.solve_compressible(sens_params)
+        Q_fR[:, i] = Q[0]
+    np.save('data/Q_fR.npy', Q_fR)   
+
+if not os.path.exists('data/Q_beta.npy'):
+    for (j, beta) in enumerate(beta_vals):
+        print(beta)
+        sens_params = params.copy()
+        sens_params['beta'] = beta
+
+        S, pw, Q, h = models.solve_compressible(sens_params)
+        Q_beta[:, j] = Q[0]
+    np.save('data/Q_beta.npy', Q_beta)
+
+Q_fR = np.load('data/Q_fR.npy')
+Q_beta = np.load('data/Q_beta.npy')
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(8, 4), sharey=True)
-
-# for (i, fR) in enumerate(fR_vals):
-#     print(fR)
-#     sens_params = params.copy()
-#     sens_params['fR'] = fR
-#
-#     S, pw, Q, h = models.solve_compressible(sens_params)
-#     Q_fR[:, i] = Q[0]
-#     ax1.plot(t_eval/86400, Q[0], label='f$_R$ = %.2f' % fR)
-#
-# for (j, beta) in enumerate(beta_vals):
-#     print(beta)
-#     sens_params = params.copy()
-#     sens_params['beta'] = beta
-#
-#     S, pw, Q, h = models.solve_compressible(sens_params)
-#     Q_beta[:, j] = Q[0]
-#
-#     ax2.plot(t_eval/86400, Q[0], label='$\\beta$ = %.1e' % beta)
-#
-# np.save('Q_fR.npy', Q_fR)
-# np.save('Q_beta.npy', Q_beta)
-
-Q_fR = np.load('Q_fR.npy')
-Q_beta = np.load('Q_beta.npy')
-
-
 for (i, fR) in enumerate(fR_vals):
     ax1.plot(t_eval/86400, Q_fR[:, i], label='f$_R$ = %.2f' % fR)
 
@@ -129,4 +126,4 @@ ax2.text(0.025, 0.95, 'b', transform=ax2.transAxes, fontsize=12)
 ax2.legend()
 ax2.set_xlim([0, 60])
 
-fig.savefig('sensitivity_tests.png', dpi=600)
+fig.savefig('figures/sensitivity_tests.png', dpi=600)

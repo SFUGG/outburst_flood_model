@@ -22,7 +22,7 @@ default_params = dict(
 A = 2.4e-24,        # Flow law coefficient (Pa-3.s-1)
 n = 3,              # Flow law exponent
 fR = 0.15,          # Darcy-Weisbach friction coefficient
-beta = 1e-4,        # Compressibility (Pa-1)
+beta = 1e-7,        # Compressibility (Pa-1)
 )
 
 # HELPER FUNCTIONS
