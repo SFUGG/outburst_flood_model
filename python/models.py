@@ -178,7 +178,7 @@ def solve_compressible(params):
                       A : Rheology parameter (default: 2.4e-24, units Pa-3 s-1)
                       n : Glen's flow-law exponent (default: 3)
                      fR : Darcy friction factor (default: 0.15,)
-                   beta : Compressibility (1e-4, units Pa-1)
+                   beta : Compressibility (1e-7, units Pa-1)
     
     Returns
     -------
@@ -265,7 +265,6 @@ def solve_incompressible(params):
                       A : Rheology parameter (default: 2.4e-24, units Pa-3 s-1)
                       n : Glen's flow-law exponent (default: 3)
                      fR : Darcy friction factor (default: 0.15,)
-                   beta : Compressibility (1e-4, units Pa-1)
     
     Returns
     -------
