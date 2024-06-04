@@ -87,10 +87,6 @@ area = lambda h: (h/slope)**2
 params_hyps['A_lake'] = lambda h: area(h) + 10
 
 hh = np.arange(0, h_lake)
-# fig, ax = plt.subplots()
-# ax.plot(hh, params_const['A_lake'](hh))
-# ax.plot(hh, params_hyps['A_lake'](hh))
-# plt.show()
 
 dh = hh[1:] - hh[:-1]
 
@@ -117,13 +113,10 @@ ax2.set_xlabel('Time (days)')
 ax2.set_ylabel('h (m)')
 ax2.text(0.025, 0.95, 'b', transform=ax2.transAxes, fontsize=12)
 ax2.set_xlim([0, 60])
-ax2.legend(loc='left')
+ax2.legend(loc='lower left')
 ax2.set_ylim([0, 550])
 
 plt.tight_layout()
-# ax1.legend()
 
-fig.savefig('hypsometry_discharge.png', dpi=600, fontsize=12)
+fig.savefig('hypsometry_discharge.png', dpi=600)
 
-
-plt.show()

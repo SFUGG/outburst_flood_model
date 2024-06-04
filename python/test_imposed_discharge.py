@@ -110,4 +110,3 @@ plt.tight_layout()
 
 fig.savefig('imposed_discharge_comparison.png', dpi=600)
 
-plt.show()

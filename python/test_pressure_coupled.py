@@ -1,5 +1,5 @@
 """
-Imposed discharge for incompressible and compressible channel models
+Pressure-coupled discharge for incompressible and compressible channel models
 """
 
 import numpy as np
@@ -91,15 +91,13 @@ ax1.grid()
 ax1.set_ylabel('S (m$^2$)')
 ax1.set_xlabel('Distance along conduit (km)')
 ax1.text(0.1, 0.925, 'a', transform=ax1.transAxes, fontsize=12)
+ax1.legend(loc='upper left')
 
 ax2.grid()
 ax2.set_ylabel('Q (m$^3$/s)')
 ax2.set_xlabel('Time (days)')
 ax2.text(0.1, 0.925, 'b', transform=ax2.transAxes, fontsize=12)
-# ax2.legend()
 ax2.set_ylim([0, 100])
-
-plt.tight_layout()
 
 fig.savefig('pressure_discharge_comparison.png', dpi=600)
 
@@ -135,5 +133,3 @@ axs[3].text(0.025, 0.85, 'd', transform=axs[3].transAxes, fontsize=12)
 
 plt.tight_layout()
 fig.savefig('compressible_pressure_drainage.png', dpi=600)
-
-plt.show()

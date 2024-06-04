@@ -3,11 +3,12 @@ Solvers for compressible and incompressible outburst flood conduit
 models
 """
 
+import time
 import numpy as np
 from matplotlib import pyplot as plt
 import scipy.integrate
 
-# PHYSICAL CONSTANTS (can't change these values)
+# PHYSICAL CONSTANTS - do not recommend changing these values
 rhoi = 917          # Density of ice (kg.m-3)
 rhow = 1000         # Density of water (kg.m-3)
 g = 9.81            # Gravitational acceleration (m.s-2)
@@ -50,6 +51,18 @@ def rhs_compressible_channel(t, v, params):
     """
     Calculate d(pw)/dt and d(S)/dt for nonsteady, compressible conduit
     equations.
+
+    Parameters
+    ----------
+    t :     2-member sequence
+            Interval of integration, (t0, tf)
+    
+    v :     array
+            Concatenated state vector (S, pw, h),
+            i.e. output of wrap(S, pw, h)
+    
+    params: dict
+            Dictionary of model parameters
     """
     S, pw, h = unwrap(v)
 
@@ -68,6 +81,7 @@ def rhs_compressible_channel(t, v, params):
     # Compute pressure gradient at lake outlet
     pgrad_lake = (pw[0] - p_lake)/dx
 
+    # Update default parameters if they have been specified as keyward arguments
     if params['drainage']=='pressure-coupled':
         # Compute Q discharge from lake (avoiding divide by zero error)
         if pgrad_lake!=0:
@@ -80,6 +94,7 @@ def rhs_compressible_channel(t, v, params):
             Q_lake = 0
 
     else:
+        # Compute Q discharge from prescribed lake discharge function
         Q_lake_fun = params['Q_lake']
         Q_lake = Q_lake_fun(t)
 
@@ -88,6 +103,7 @@ def rhs_compressible_channel(t, v, params):
         Q_lake = 0
 
     N = params['N']
+
     # DERIVATIVE OPERATORS
     # Upwind derivatives - this enforces a BC on the left boundary
     D_upwind = np.diag(np.ones(N)) - np.diag(np.ones(N-1), k=-1)
@@ -96,11 +112,12 @@ def rhs_compressible_channel(t, v, params):
     # Downwind derivatives - this enforces a BC on the right boundary
     D_downwind = 1/dx*(-np.diag(np.ones(N)) + np.diag(np.ones(N-1), k=1))
 
-    dpwds = np.matmul(D_downwind, np.vstack(pw)).flatten()
-    Q = -S**(5/4)*(1/rhow/fR)**(1/2)*(1/np.pi)**(1/4)*np.abs(dpwds)**(-0.5)*dpwds
-    dQds = np.matmul(D_upwind, np.vstack(Q)).flatten()
+    # Compute pressure gradient, discharge, and discharge gradient
+    dpwds = np.squeeze(D_downwind @ np.vstack(pw))
+    Q = -S**(5./4.)*(1/rhow/fR)**(1/2)*(1/np.pi)**(1/4)*np.abs(dpwds)**(-0.5)*dpwds
+    dQds = np.squeeze(D_upwind @ np.vstack(Q))
 
-    # !! Lake discharge BC
+    # !! Lake discharge BC: set upstream channel discharge to lake discharge
     dQds[0] = (Q[0] - Q_lake)/dx
 
     # Compute components of time derivatives, disallowing freeze-on and
@@ -115,7 +132,7 @@ def rhs_compressible_channel(t, v, params):
     dSdt = mdot/rhoi - creep_closure
     dpwdt = -1/beta/S*(dSdt + dQds - mdot/rhow)
 
-    if isinstance(A_lake, float):
+    if not callable(A_lake):
         A_i = A_lake
     else:
         A_i = A_lake(h)
@@ -133,7 +150,42 @@ def solve_compressible(params):
     """
     Solve compressible conduit equations for experimental design
     specified by `params`
+
+    Parameters
+    ----------
+    params : dict
+        Dictionary specifying experimental configuration.
+        Required dictionary keys:
+                      x : Grid coordinates (m)
+                      L : Domain length (m)
+                      N : Number of grid elements
+                      dx: Grid spacing (m)
+                      zb: Bed elevation (m)
+                    p_i : Overburden ice pressure (Pa)
+                     dt : Time step (s)
+                 t_eval : Times to evaluate solution (s)
+                 t_span : Integration interval (s)
+                 A_lake : Lake area (m2). Float or callable with signature
+                          A_lake(h) for lake depth h
+                 init_S : Initial channel area (m2)
+               init_pw  : Initial channel water pressure (Pa)
+            init_h_lake : Initial lake height above channel (m)
+               drainage : optional, 'pressure-coupled'
+                          If 'pressure-coupled', compare lake discharge from
+                          lake hydrostatic pressure. Otherwise, prescribed
+                          discharge (m3/s)
+        Any defaults from default_params can be overridden:
+                      A : Rheology parameter (default: 2.4e-24, units Pa-3 s-1)
+                      n : Glen's flow-law exponent (default: 3)
+                     fR : Darcy friction factor (default: 0.15,)
+                   beta : Compressibility (1e-4, units Pa-1)
+    
+    Returns
+    -------
+    (S, pw, Q, h_lake) solutions
     """
+    t0 = time.perf_counter()
+    # Read parameters and experimental configuration
     x = params['x']
     L = params['L']
     N = params['N']
@@ -178,15 +230,48 @@ def solve_compressible(params):
     for i in range(pw.shape[1]):
         dpwds = np.matmul(D_downwind, np.vstack(pw[:, i])).flatten()
         Q[:, i] = -S[:, i]**(5/4)*(1/rhow/fR)**(1/2)*(1/np.pi)**(1/4)*np.abs(dpwds)**(-0.5)*dpwds
-
+    t1 = time.perf_counter()
+    print('Compressible solve took {:.3f} seconds'.format(t1-t0))
     return (S, pw, Q, h_lake)
 
 
 
 def solve_incompressible(params):
     """
-    Solve incompressible conduit equations with NO pressure coupling
+    Solve incompressible conduit equations for experimental design
+    specified by `params`. No lake pressure--discharge coupling available.
+
+    Parameters
+    ----------
+    params : dict
+        Dictionary specifying experimental configuration.
+        Required dictionary keys:
+                      x : Grid coordinates (m)
+                      L : Domain length (m)
+                      N : Number of grid elements
+                      dx: Grid spacing (m)
+                      zb: Bed elevation (m)
+                    p_i : Overburden ice pressure (Pa)
+                     dt : Time step (s)
+                 t_eval : Times to evaluate solution (s)
+                 t_span : Integration interval (s)
+                 A_lake : Lake area (m2)
+                 init_S : Initial channel area (m2)
+               init_pw  : Initial guess for channel water pressure (Pa)
+            init_h_lake : Initial guess for lake height above channel (m)
+               drainage : Not used, `pressure-coupled` is not available
+                          for incompressible equations
+        Any defaults from default_params can be overridden:
+                      A : Rheology parameter (default: 2.4e-24, units Pa-3 s-1)
+                      n : Glen's flow-law exponent (default: 3)
+                     fR : Darcy friction factor (default: 0.15,)
+                   beta : Compressibility (1e-4, units Pa-1)
+    
+    Returns
+    -------
+    (S, pw, Q, h_lake) solutions
     """
+    t0 = time.perf_counter()
     A = params['A']
     n = params['n']
     fR = params['fR']
@@ -259,7 +344,6 @@ def solve_incompressible(params):
         # Iterate to find a consistent solution for flux Q and cross sectional
         # area, given an imposed pressure gradient
         while err>tol and itnum<maxiter:
-        # for i in range(5):
             # Solve for discharge Q
             D = D_upwind + (1/rhoi - 1/rhow)/Lf*(gamma - 1)*np.diag(dpwds)
             y = np.vstack(2*S*A*( p_i - pw)**n/n**n)
@@ -297,7 +381,7 @@ def solve_incompressible(params):
         dSdt = mi/rhow - creep
         t = t + dt
 
-        if isinstance(A_lake, float):
+        if not callable(A_lake):
             A_i = A_lake
         else:
             A_i = A_lake(h_lake)
@@ -315,5 +399,6 @@ def solve_incompressible(params):
 
         S = S + dt*dSdt
 
-
+    t1 = time.perf_counter()
+    print('Incompressible solve took {:.3f} seconds'.format(t1-t0))
     return S_out, pw_out, Q_out, h_lake_out
